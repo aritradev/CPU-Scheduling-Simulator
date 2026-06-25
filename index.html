@@ -437,38 +437,51 @@ function simulateSJF(processes) {
 
 // SRTF 
 function simulateSRTF(processes) {
-  const procs = processes.map(p => ({...p, remaining: p.burst, ct: 0, started: false}));
+  const procs = processes
+    .map(p => ({...p, remaining: p.burst, ct: 0}))
+    .sort((a,b) => a.arrival - b.arrival || a.pid.localeCompare(b.pid));
   const gantt = [];
-  let time = 0;
+  let time = procs.length ? Math.min(...procs.map(p => p.arrival)) : 0;
   const n = procs.length;
   let completed = 0;
-  let prev = null;
-  const totalTime = procs.reduce((s,p) => s + p.burst, 0) + Math.min(...procs.map(p=>p.arrival));
-  const endTime = Math.max(...procs.map(p=>p.arrival)) + procs.reduce((s,p)=>s+p.burst,0) + 1;
+  let prevPid = null;
 
   while (completed < n) {
     const available = procs.filter(p => p.remaining > 0 && p.arrival <= time);
     if (available.length === 0) {
-      const nextArr = Math.min(...procs.filter(p=>p.remaining>0).map(p=>p.arrival));
-      if (prev && prev.pid !== 'IDLE') {
-        gantt[gantt.length-1] && (gantt[gantt.length-1].end = time);
+      const nextArrivals = procs.filter(p => p.remaining > 0).map(p => p.arrival).filter(arr => arr > time);
+      const nextArr = nextArrivals.length ? Math.min(...nextArrivals) : time;
+      if (prevPid !== 'IDLE' && gantt.length) {
+        gantt[gantt.length - 1].end = time;
       }
       gantt.push({ pid: 'IDLE', start: time, end: nextArr });
-      prev = { pid: 'IDLE' };
+      prevPid = 'IDLE';
       time = nextArr;
       continue;
     }
     available.sort((a,b) => a.remaining - b.remaining || a.arrival - b.arrival || a.pid.localeCompare(b.pid));
     const p = available[0];
 
-    if (!prev || prev.pid !== p.pid) {
-      gantt.push({ pid: p.pid, start: time, end: time + 1 });
-    } else {
-      gantt[gantt.length-1].end = time + 1;
+    const futureArrivals = procs
+      .filter(proc => proc.remaining > 0 && proc.arrival > time)
+      .map(proc => proc.arrival);
+    const nextArrival = futureArrivals.length ? Math.min(...futureArrivals) : Infinity;
+    const runUntil = Math.min(time + p.remaining, nextArrival);
+    const execTime = runUntil - time;
+
+    if (execTime <= 0) {
+      time = nextArrival;
+      continue;
     }
-    prev = p;
-    p.remaining--;
-    time++;
+
+    if (prevPid !== p.pid) {
+      gantt.push({ pid: p.pid, start: time, end: runUntil });
+    } else {
+      gantt[gantt.length - 1].end = runUntil;
+    }
+    prevPid = p.pid;
+    p.remaining -= execTime;
+    time = runUntil;
 
     if (p.remaining === 0) {
       p.ct = time;
