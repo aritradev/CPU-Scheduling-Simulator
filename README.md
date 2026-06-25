@@ -4,7 +4,7 @@ A clean, browser-based CPU scheduling simulator for comparing classic operating 
 
 **Live Demo:** https://aritradev.github.io/CPU-Scheduling-Simulator/
 
-**Page Views:** ![Visitor Count](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Faritradev.github.io%2FCPU-Scheduling-Simulator%2F&count_bg=%231D4ED8&title_bg=%23111827&icon=github.svg&icon_color=%23FFFFFF&title=views&edge_flat=false)
+ [![Visitor Count](https://visitor-badge.laobi.icu/badge?page_id=aritradev.CPU-Scheduling-Simulator)](https://aritradev.github.io/CPU-Scheduling-Simulator/)
 
 ## Overview
 
